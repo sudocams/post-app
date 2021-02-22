@@ -10,7 +10,12 @@ router.post("/api/posts", checkAuth, fileExtract, (req, res, next) => {
   const url = req.protocol + "://" + req.get("host");
   const post = new Post({
     title: req.body.title,
-    content: req.body.content,
+    subject: req.body.subject,
+    instructions: req.body.instructions,
+    postDate: req.body.postDate,
+    dueDate: req.body.dueDate,
+    cost: req.body.cost,
+    selectTutor: req.body.selectTutor,
     imagePath: url + "/images/" + req.file.filename,
     creator: req.userData.userId,
   });
@@ -19,11 +24,9 @@ router.post("/api/posts", checkAuth, fileExtract, (req, res, next) => {
     .then((createdPost) => {
       res.status(201).json({
         message: "post added successfully",
-        postI: {
+        post: {
+          ...createdPost,
           id: createdPost._id,
-          title: createdPost.title,
-          content: createdPost.content,
-          imagePath: createdPost.imagePath,
         },
       });
     })
@@ -44,12 +47,11 @@ router.get("/api/posts", (req, res, next) => {
   }
 
   postQuerry
-    .find()
     .then((documents) => {
       fetchedPosts = documents;
       return Post.estimatedDocumentCount();
     })
-    .then((count) => {
+    .then(count => {
       res.status(200).json({
         message: "Posts fetched successfuly",
         posts: fetchedPosts,
@@ -61,6 +63,8 @@ router.get("/api/posts", (req, res, next) => {
     });
 });
 
+
+
 router.put("/api/posts/:id", checkAuth, fileExtract, (req, res, next) => {
   let imagePath = req.body.imagePath;
   if (req.file) {
@@ -70,10 +74,18 @@ router.put("/api/posts/:id", checkAuth, fileExtract, (req, res, next) => {
   const post = new Post({
     _id: req.body.id,
     title: req.body.title,
-    content: req.body.content,
+    subject: req.body.subject,
+    instructions: req.body.instructions,
+    postDate: req.body.postDate,
+    dueDate: req.body.dueDate,
+    cost: req.body.cost,
+    selectTutor: req.body.selectTutor,
     imagePath: imagePath,
     creator: req.userData.userId,
   });
+
+
+
   Post.updateOne({ _id: req.params.id, creator: req.userData.userId }, post)
     .then((result) => {
       if (result.n > 0) {
@@ -89,15 +101,24 @@ router.put("/api/posts/:id", checkAuth, fileExtract, (req, res, next) => {
     });
 });
 
+
+
+
 router.get("/api/posts/:id", (req, res, next) => {
-  Post.findById(req.params.id).then((post) => {
+  Post.findById(req.params.id).then(post => {
     if (post) {
       res.status(200).json(post);
     } else {
       res.status(404).json({ message: "posts not found" });
     }
+  }).catch(error =>{
+    res.status(500).json({
+      message:"fetching post failed"
+    });
   });
 });
+
+
 
 router.delete("/api/posts/:id", checkAuth, (req, res, next) => {
   Post.deleteOne({ _id: req.params.id, creator: req.userData.userId }).then(
@@ -107,8 +128,11 @@ router.delete("/api/posts/:id", checkAuth, (req, res, next) => {
       } else {
         res.status(401).json({ mesage: "delete unsuccessful" });
       }
-    }
-  );
+    }).catch(error => {
+      res.status(500).json({
+        message: "Deleting posts failed!"
+      });
+    });
 });
 
 module.exports = router;
