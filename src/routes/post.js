@@ -20,32 +20,27 @@ router.post("/api/posts", checkAuth, fileExtract, (req, res, next) => {
     creator: req.userData.userId,
   });
   post
-    .save()
-    .then((createdPost) => {
+    .save().then(createdPost => {
       res.status(201).json({
         message: "post added successfully",
-        post: {
+        post:{
           ...createdPost,
-          id: createdPost._id,
-        },
+          id: createdPost._id
+        }
       });
     })
-    .catch((error) => {
-      res.status(500).json({
-        message: "creating post failed",
-      });
-    });
 });
+
+
 
 router.get("/api/posts", (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
-  const postQuerry = Post.find();
+  const postQuerry = Post.find().sort({createdAt:-1});
   let fetchedPosts;
   if (pageSize && currentPage) {
     postQuerry.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
-
   postQuerry
     .then((documents) => {
       fetchedPosts = documents;
